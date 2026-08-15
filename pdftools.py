@@ -1,4 +1,5 @@
 from pypdf import PdfReader, PdfWriter
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
@@ -15,7 +16,8 @@ def load_pdf():
         try:
             reader = PdfReader(file_path)
             fields = reader.get_fields() or {}
-            info_label.configure(text=f"Read {len(reader.pages)} pages and {len(fields)} fields")
+            info_label.configure(text=f"{Path(file_path).stem}: {len(reader.pages)} pages and {len(fields)} fields")
+            pages_entry.delete(0, tk.END)
             for p in range(len(reader.pages)):
                 pages_entry.insert(tk.END, f"{p+1},")
             pages_entry.delete(len(pages_entry.get())-1,tk.END)
@@ -45,7 +47,7 @@ def save_pdf():
                 writer.add_page(reader.pages[page-1])
             with open(file_path, "wb") as f:
                 writer.write(f)
-            info_label.configure(text=f"Wrote {len(pages)} pages")
+            info_label.configure(text=f"{Path(file_path).stem}: Wrote {len(pages)} pages")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {e}")
 
