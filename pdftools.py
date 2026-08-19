@@ -16,6 +16,9 @@ def load_pdf():
         try:
             reader = PdfReader(file_path)
             fields = reader.get_fields() or {}
+            info_label = pane.nametowidget("info").nametowidget("info_label")
+            pages_entry = pane.nametowidget("controls").nametowidget("pages_entry")
+            output_text = pane.nametowidget("output").nametowidget("output_text")
             info_label.configure(text=f"{Path(file_path).stem}: {len(reader.pages)} pages and {len(fields)} fields")
             pages_entry.delete(0, tk.END)
             for p in range(len(reader.pages)):
@@ -40,6 +43,7 @@ def save_pdf():
     if file_path:
         try:
             writer = PdfWriter()
+            pages_entry = pane.nametowidget("controls").nametowidget("pages_entry")
             pages = [int(p) for p in pages_entry.get().split(',')]
             if len(pages) == 0:
                 pages = [p+1 for p in range(len(reader.pages))]
@@ -47,9 +51,37 @@ def save_pdf():
                 writer.add_page(reader.pages[page-1])
             with open(file_path, "wb") as f:
                 writer.write(f)
-            info_label.configure(text=f"{Path(file_path).stem}: Wrote {len(pages)} pages")
+            pane.nametowidget("info").nametowidget("info_label").configure(text=f"{Path(file_path).stem}: Wrote {len(pages)} pages")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {e}")
+
+# Build Controls
+def build_controls() -> ttk.Frame:
+    controls = ttk.Frame(pane, height=40, name="controls")
+    controls.pack_propagate(False)
+    load_button = ttk.Button(controls, text="Load PDF", command=load_pdf)
+    load_button.pack(side="left", padx=5, pady=5)
+    save_button = ttk.Button(controls, text="Save PDF", command=save_pdf)
+    save_button.pack(side="left", padx=5, pady=5)
+    pages_label = ttk.Label(controls, text="Pages:")
+    pages_label.pack(side="left", padx=5, pady=5)
+    pages_entry = ttk.Entry(controls, width=30, name="pages_entry")
+    pages_entry.pack(side="left", padx=5, pady=5)
+    return controls
+
+# Build Info
+def build_info() -> ttk.Frame:
+    info = ttk.Frame(pane, height=30, name="info")
+    info_label = ttk.Label(info, name="info_label")
+    info_label.pack(side="left", padx=5, pady=5)
+    return info
+
+# Build Output
+def build_output() -> ttk.Frame:
+    output = ttk.Frame(pane, height=400, name="output")
+    output_text = tk.Text(output, state=tk.DISABLED, name="output_text")
+    output_text.pack(expand=True, fill=tk.BOTH)
+    return output
 
 # Main window
 main_window = tk.Tk()
@@ -58,28 +90,8 @@ main_window.geometry("600x600")
 
 pane = ttk.PanedWindow(main_window, orient=tk.VERTICAL)
 pane.pack(fill=tk.BOTH, expand=True)
-
-controls = ttk.Frame(pane, height=40)
-controls.pack_propagate(False)
-load_button = ttk.Button(controls, text="Load PDF", command=load_pdf)
-load_button.pack(side="left", padx=5, pady=5)
-save_button = ttk.Button(controls, text="Save PDF", command=save_pdf)
-save_button.pack(side="left", padx=5, pady=5)
-pages_label = ttk.Label(controls, text="Pages:")
-pages_label.pack(side="left", padx=5, pady=5)
-pages_entry = ttk.Entry(controls, width=30)
-pages_entry.pack(side="left", padx=5, pady=5)
-
-info = ttk.Frame(pane, height=30)
-info_label = ttk.Label(info)
-info_label.pack(side="left", padx=5, pady=5)
-
-output = ttk.Frame(pane, height=400)
-output_text = tk.Text(output, state=tk.DISABLED)
-output_text.pack(expand=True, fill=tk.BOTH)
-
-pane.add(controls)
-pane.add(info)
-pane.add(output)
+pane.add(build_controls())
+pane.add(build_info())
+pane.add(build_output())
 
 main_window.mainloop()
