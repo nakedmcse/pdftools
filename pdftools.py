@@ -26,8 +26,27 @@ def load_pdf():
             pages_entry.delete(len(pages_entry.get())-1,tk.END)
             output_text.configure(state=tk.NORMAL)
             output_text.delete(1.0, tk.END)
-            for name, field in fields.items():
-                output_text.insert(tk.END, f"{name} {field.get('/FT')}\n")
+            for page_num, page in enumerate(reader.pages):
+                annotations = page.get("/Annots", [])
+                for annotation_ref in annotations:
+                    annotation = annotation_ref.get_object()
+
+                    if annotation.get("/Subtype") == "/Widget":
+                        rect = annotation.get("/Rect")
+                        coords = [float(coord) for coord in rect] if rect else []
+                        name = annotation.get("/T")
+                        parent_ref = annotation.get("/Parent")
+                        parent = parent_ref.get_object() if parent_ref else None
+
+                        if not name and parent:
+                            name = parent.get("/T")
+
+                        field_type = annotation.get("/FT")
+                        if not field_type and parent:
+                            field_type = parent.get("/FT")
+
+                        output_text.insert(tk.END,f"{name} {field_type} page={page_num + 1} {coords}\n")
+
             output_text.configure(state=tk.DISABLED)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load file: {e}")
