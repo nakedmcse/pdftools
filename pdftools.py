@@ -18,14 +18,13 @@ def load_pdf():
             fields = reader.get_fields() or {}
             info_label = pane.nametowidget("info").nametowidget("info_label")
             pages_entry = pane.nametowidget("controls").nametowidget("pages_entry")
-            output_text = pane.nametowidget("output").nametowidget("output_text")
+            output_tree = pane.nametowidget("output").nametowidget("output_tree")
             info_label.configure(text=f"{Path(file_path).stem}: {len(reader.pages)} pages and {len(fields)} fields")
             pages_entry.delete(0, tk.END)
             for p in range(len(reader.pages)):
                 pages_entry.insert(tk.END, f"{p+1},")
             pages_entry.delete(len(pages_entry.get())-1,tk.END)
-            output_text.configure(state=tk.NORMAL)
-            output_text.delete(1.0, tk.END)
+            output_tree.delete(*output_tree.get_children())
             for page_num, page in enumerate(reader.pages):
                 annotations = page.get("/Annots", [])
                 for annotation_ref in annotations:
@@ -45,9 +44,7 @@ def load_pdf():
                         if not field_type and parent:
                             field_type = parent.get("/FT")
 
-                        output_text.insert(tk.END,f"{name} {field_type} page={page_num + 1} {coords}\n")
-
-            output_text.configure(state=tk.DISABLED)
+                        output_tree.insert("", tk.END, values=(name, field_type, page_num+1, coords))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load file: {e}")
 
@@ -97,15 +94,26 @@ def build_info() -> ttk.Frame:
 
 # Build Output
 def build_output() -> ttk.Frame:
-    output = ttk.Frame(pane, height=400, name="output")
-    output_text = tk.Text(output, state=tk.DISABLED, name="output_text")
-    output_text.pack(expand=True, fill=tk.BOTH)
+    output = ttk.Frame(pane, name="output")
+    output_tree = ttk.Treeview(output, columns=["name", "type", "page", "coords"], show="headings", name="output_tree")
+    output_tree.heading("name", text="Name")
+    output_tree.heading("type", text="Type")
+    output_tree.heading("page", text="Page")
+    output_tree.heading("coords", text="Coords")
+    output_tree.column("name", width=400, anchor="w")
+    output_tree.column("type", width=50, anchor="center")
+    output_tree.column("page", width=50, anchor="center")
+    output_tree.column("coords", width=300, anchor="w")
+    scrollbar = ttk.Scrollbar(output, orient="vertical", command=output_tree.yview)
+    output_tree.configure(yscrollcommand=scrollbar.set)
+    scrollbar.pack(side="right", fill="y")
+    output_tree.pack(side="left", fill=tk.BOTH, expand=True, padx=5, pady=5)
     return output
 
 # Main window
 main_window = tk.Tk()
 main_window.title("PDF Tools")
-main_window.geometry("600x600")
+main_window.geometry("800x600")
 
 pane = ttk.PanedWindow(main_window, orient=tk.VERTICAL)
 pane.pack(fill=tk.BOTH, expand=True)
