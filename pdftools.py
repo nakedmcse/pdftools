@@ -14,6 +14,7 @@ def coords_to_string(c: list) -> str:
     return f"({c[0]},{c[1]}) x ({c[2]},{c[3]})"
 
 def flatten_pdf(writer: PdfWriter) -> None:
+    global reader
     fields = reader.get_fields() or {}
     values = {name: field.get("/V", "") for name, field in fields.items()}
     for page in writer.pages:
