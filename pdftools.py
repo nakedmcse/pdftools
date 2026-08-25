@@ -5,6 +5,21 @@ from tkinter import ttk, filedialog, messagebox
 
 # Globals
 reader = None
+flatten_var = None
+
+# Helpers
+def coords_to_string(c: list) -> str:
+    if len(c) < 4:
+        return ""
+    return f"({c[0]},{c[1]}) x ({c[2]},{c[3]})"
+
+def flatten_pdf(writer: PdfWriter) -> None:
+    fields = reader.get_fields() or {}
+    values = {name: field.get("/V", "") for name, field in fields.items()}
+    for page in writer.pages:
+        writer.update_page_form_field_values(page, values, auto_regenerate=False, flatten=True)
+    writer.remove_annotations("/Widget")
+    writer._root_object.pop("/AcroForm", None)
 
 # Load PDF
 def load_pdf():
@@ -44,13 +59,13 @@ def load_pdf():
                         if not field_type and parent:
                             field_type = parent.get("/FT")
 
-                        output_tree.insert("", tk.END, values=(name, field_type, page_num+1, coords))
+                        output_tree.insert("", tk.END, values=(name, field_type, page_num+1, coords_to_string(coords)))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load file: {e}")
 
 # Save PDF
 def save_pdf():
-    global reader
+    global reader, flatten_var
     if reader is None:
         return
     file_path = filedialog.asksaveasfilename(
@@ -63,8 +78,9 @@ def save_pdf():
             pages = [int(p) for p in pages_entry.get().split(',')]
             if len(pages) == 0:
                 pages = [p+1 for p in range(len(reader.pages))]
-            for page in pages:
-                writer.add_page(reader.pages[page-1])
+            writer.append(reader, pages=[p - 1 for p in pages])
+            if (flatten_var.get()):
+                flatten_pdf(writer)
             with open(file_path, "wb") as f:
                 writer.write(f)
             pane.nametowidget("info").nametowidget("info_label").configure(text=f"{Path(file_path).stem}: Wrote {len(pages)} pages")
@@ -73,12 +89,16 @@ def save_pdf():
 
 # Build Controls
 def build_controls() -> ttk.Frame:
+    global flatten_var
     controls = ttk.Frame(pane, height=40, name="controls")
     controls.pack_propagate(False)
     load_button = ttk.Button(controls, text="Load PDF", command=load_pdf)
     load_button.pack(side="left", padx=5, pady=5)
     save_button = ttk.Button(controls, text="Save PDF", command=save_pdf)
     save_button.pack(side="left", padx=5, pady=5)
+    flatten_var = tk.BooleanVar(value=False)
+    flatten_check = ttk.Checkbutton(controls, text="Flatten", variable=flatten_var)
+    flatten_check.pack(side="left", padx=5, pady=5)
     pages_label = ttk.Label(controls, text="Pages:")
     pages_label.pack(side="left", padx=5, pady=5)
     pages_entry = ttk.Entry(controls, width=30, name="pages_entry")
