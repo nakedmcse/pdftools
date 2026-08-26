@@ -17,10 +17,11 @@ def flatten_pdf(writer: PdfWriter) -> None:
     global reader
     fields = reader.get_fields() or {}
     values = {name: field.get("/V", "") for name, field in fields.items()}
-    for page in writer.pages:
-        writer.update_page_form_field_values(page, values, auto_regenerate=False, flatten=True)
+    if "/AcroForm" in writer._root_object:
+        for page in writer.pages:
+            writer.update_page_form_field_values(page, values, auto_regenerate=False, flatten=True)
+        writer._root_object.pop("/AcroForm", None)
     writer.remove_annotations("/Widget")
-    writer._root_object.pop("/AcroForm", None)
 
 # Load PDF
 def load_pdf():
