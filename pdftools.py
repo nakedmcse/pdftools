@@ -24,7 +24,7 @@ def flatten_pdf(writer: PdfWriter) -> None:
     writer.remove_annotations("/Widget")
 
 # Load PDF
-def load_pdf():
+def load_pdf() -> None:
     global reader
     file_path = filedialog.askopenfilename(
         filetypes=[("PDF files", "*.pdf")]
@@ -66,7 +66,7 @@ def load_pdf():
             messagebox.showerror("Error", f"Failed to load file: {e}")
 
 # Save PDF
-def save_pdf():
+def save_pdf() -> None:
     global reader, flatten_var
     if reader is None:
         return
