@@ -1,3 +1,5 @@
+from typing import List
+
 from pypdf import PdfReader, PdfWriter
 from pathlib import Path
 import tkinter as tk
@@ -8,6 +10,16 @@ reader = None
 flatten_var = None
 
 # Helpers
+def ranges_to_pagelist(ranges: str) -> List[int]:
+    pages = []
+    for r in ranges.split(','):
+        if '-' in r:
+            start, end = map(int, r.split('-'))
+            pages.extend(range(start, end + 1))
+        else:
+            pages.append(int(r))
+    return pages
+
 def coords_to_string(c: list) -> str:
     if len(c) < 4:
         return ""
@@ -38,9 +50,7 @@ def load_pdf() -> None:
             output_tree = pane.nametowidget("output").nametowidget("output_tree")
             info_label.configure(text=f"{Path(file_path).stem}: {len(reader.pages)} pages and {len(fields)} fields")
             pages_entry.delete(0, tk.END)
-            for p in range(len(reader.pages)):
-                pages_entry.insert(tk.END, f"{p+1},")
-            pages_entry.delete(len(pages_entry.get())-1,tk.END)
+            pages_entry.insert(tk.END, f"1-{len(reader.pages)}")
             output_tree.delete(*output_tree.get_children())
             for page_num, page in enumerate(reader.pages):
                 annotations = page.get("/Annots", [])
@@ -77,7 +87,7 @@ def save_pdf() -> None:
         try:
             writer = PdfWriter()
             pages_entry = pane.nametowidget("controls").nametowidget("pages_entry")
-            pages = [int(p) for p in pages_entry.get().split(',')]
+            pages = ranges_to_pagelist(pages_entry.get())
             if len(pages) == 0:
                 pages = [p+1 for p in range(len(reader.pages))]
             writer.append(reader, pages=[p - 1 for p in pages])
