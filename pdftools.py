@@ -14,8 +14,10 @@ def ranges_to_pagelist(ranges: str) -> List[int]:
     pages = []
     for r in ranges.split(','):
         if '-' in r:
-            start, end = map(int, r.split('-'))
-            pages.extend(range(start, end + 1))
+            split_range =r.split('-')
+            if len(split_range) == 2:
+                start, end = map(int, split_range)
+                pages.extend(range(start, end + 1))
         else:
             pages.append(int(r))
     return pages
