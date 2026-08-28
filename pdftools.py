@@ -51,6 +51,7 @@ def load_pdf() -> None:
             info_label.configure(text=f"{Path(file_path).stem}: {len(reader.pages)} pages and {len(fields)} fields")
             pages_entry.delete(0, tk.END)
             pages_entry.insert(tk.END, f"1-{len(reader.pages)}")
+            flatten_var.set(False)
             output_tree.delete(*output_tree.get_children())
             for page_num, page in enumerate(reader.pages):
                 annotations = page.get("/Annots", [])
