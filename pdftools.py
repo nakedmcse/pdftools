@@ -37,6 +37,16 @@ def flatten_pdf(writer: PdfWriter) -> None:
         writer._root_object.pop("/AcroForm", None)
     writer.remove_annotations("/Widget")
 
+def copy_to_csv() -> None:
+    output_tree = pane.nametowidget("output").nametowidget("output_tree")
+    row_ids = output_tree.get_children()
+    rows = ["name,type,page,coords"]
+    for row_id in row_ids:
+        row = output_tree.item(row_id)["values"]
+        rows.append(",".join(map(str,row)))
+    output_tree.clipboard_clear()
+    output_tree.clipboard_append("\n".join(rows))
+
 # Load PDF
 def load_pdf() -> None:
     global reader
@@ -129,6 +139,12 @@ def build_info() -> ttk.Frame:
 
 # Build Output
 def build_output() -> ttk.Frame:
+    def show_context_menu(event):
+        try:
+            context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            context_menu.grab_release()
+
     output = ttk.Frame(pane, name="output")
     output_tree = ttk.Treeview(output, columns=["name", "type", "page", "coords"], show="headings", name="output_tree")
     output_tree.heading("name", text="Name")
@@ -143,6 +159,11 @@ def build_output() -> ttk.Frame:
     output_tree.configure(yscrollcommand=scrollbar.set)
     scrollbar.pack(side="right", fill="y")
     output_tree.pack(side="left", fill=tk.BOTH, expand=True, padx=5, pady=5)
+    context_menu = tk.Menu(output_tree, tearoff=False)
+    context_menu.add_command(label="Copy to CSV", command=copy_to_csv)
+    output_tree.bind("<Button-3>", show_context_menu)
+    output_tree.bind("<Button-2>", show_context_menu)
+    output_tree.bind("<Control-Button-1>", show_context_menu)
     return output
 
 # Main window
