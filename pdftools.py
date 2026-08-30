@@ -37,13 +37,24 @@ def flatten_pdf(writer: PdfWriter) -> None:
         writer._root_object.pop("/AcroForm", None)
     writer.remove_annotations("/Widget")
 
+def encapsulate_columns(cols: List[str], e: List[int]) -> List[str]:
+    retval = []
+    i = 0
+    for col in cols:
+        if i not in e:
+            retval.append(col)
+        else:
+            retval.append(f'"{col}"')
+        i += 1
+    return retval
+
 def copy_to_csv() -> None:
     output_tree = pane.nametowidget("output").nametowidget("output_tree")
     row_ids = output_tree.get_children()
     rows = ["name,type,page,coords"]
     for row_id in row_ids:
-        row = output_tree.item(row_id)["values"]
-        rows.append(",".join(map(str,row)))
+        row = [str(x) for x in output_tree.item(row_id)["values"]]
+        rows.append(",".join(encapsulate_columns(row,[0,3])))
     output_tree.clipboard_clear()
     output_tree.clipboard_append("\n".join(rows))
 
