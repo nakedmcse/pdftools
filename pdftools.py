@@ -38,15 +38,7 @@ def flatten_pdf(writer: PdfWriter) -> None:
     writer.remove_annotations("/Widget")
 
 def encapsulate_columns(cols: List[str], e: List[int]) -> List[str]:
-    retval = []
-    i = 0
-    for col in cols:
-        if i not in e:
-            retval.append(col)
-        else:
-            retval.append(f'"{col}"')
-        i += 1
-    return retval
+    return [f'"{cols[x]}"' if x in e else cols[x] for x in range(len(cols))]
 
 def copy_to_csv() -> None:
     output_tree = pane.nametowidget("output").nametowidget("output_tree")
