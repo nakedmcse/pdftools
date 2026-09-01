@@ -14,7 +14,7 @@ def ranges_to_pagelist(ranges: str) -> List[int]:
     pages = []
     for r in ranges.split(','):
         if '-' in r:
-            split_range =r.split('-')
+            split_range = r.split('-')
             if len(split_range) == 2:
                 start, end = map(int, split_range)
                 pages.extend(range(start, end + 1))
@@ -23,9 +23,7 @@ def ranges_to_pagelist(ranges: str) -> List[int]:
     return pages
 
 def coords_to_string(c: list) -> str:
-    if len(c) < 4:
-        return ""
-    return f"({c[0]},{c[1]}) x ({c[2]},{c[3]})"
+    return "" if len(c) < 4 else f"({c[0]},{c[1]}) x ({c[2]},{c[3]})"
 
 def flatten_pdf(writer: PdfWriter) -> None:
     global reader
